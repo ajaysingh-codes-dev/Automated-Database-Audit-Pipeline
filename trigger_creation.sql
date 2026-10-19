@@ -44,3 +44,14 @@ SET status = 'completed'
 WHERE customer_name = 'Benimaru';
 
 SELECT * FROM trigger_report;
+
+DROP TABLE IF EXISTS last_report;
+CREATE TABLE IF NOT EXISTS last_report(
+    report_run_id INT AUTO_INCREMENT PRIMARY KEY,
+    last_audit_id INT NOT NULL,
+    bookmark VARCHAR(100),
+    executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+SELECT COALESCE(MAX(last_audit_id), 0) FROM last_report;
+
