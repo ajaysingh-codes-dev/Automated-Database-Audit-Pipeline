@@ -20,10 +20,10 @@ class System:
             
     def get_report(self):
         last_run = self._get_last_run()
-        quary = text("SELECT * FROM trigger_report WHERE id > :last_run")
+        query = text("SELECT * FROM trigger_report WHERE id > :last_run")
 
         with self.engine.connect() as conn:
-            df = pd.read_sql(quary, conn, params={"last_run": last_run})
+            df = pd.read_sql(query, conn, params={"last_run": last_run})
             return df
 
 a = System()
