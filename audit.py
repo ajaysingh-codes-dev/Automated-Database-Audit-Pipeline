@@ -18,14 +18,37 @@ class System:
             last_run = conn.execute(text("SELECT COALESCE(MAX(last_audit_id), 0) FROM last_report")).scalar_one_or_none()
             return last_run
             
-    def get_report(self):
+    def _get_report(self):
         last_run = self._get_last_run()
         query = text("SELECT * FROM trigger_report WHERE id > :last_run")
 
         with self.engine.connect() as conn:
             df = pd.read_sql(query, conn, params={"last_run": last_run})
-            return df
+            old_data = pd.DataFrame(df["old_data"].fillna("{}").apply(json.loads).tolist())
+            new_data = pd.DataFrame(df["new_data"].fillna("{}").apply(json.loads).tolist())
 
+            return df, old_data, new_data, last_run
+
+    def create_reprot(self):
+
+        df, old_data, new_data, last_run = self._get_report()
+
+        if df.empty:
+            print(f"NO new audit from {last_run}")
+
+        print(f"----- Audit summary report -----\n")
+
+        total_record = df['id'].count()
+        group_record = df.groupby("action_type")["id"].count()
+
+        for action, taken in group_record.items():
+            print(f"Total {action} operations: {taken}\n")
+
+        print(f"Total audit events: ({total_record})\n")
+
+        print(f"--- A sort summary of report ---")
+        print(df[["id", "record_id", "customer_name", "change_time", "action_type"]].to_string(index=False))
+        
 a = System()
 
-print(a.get_report())
+a.create_reprot()
